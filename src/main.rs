@@ -4,11 +4,8 @@
 #![test_runner(rustios::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
-use crate::println;
 use core::panic::PanicInfo;
-
-mod serial;
-mod vga_buffer;
+use rustios::println;
 
 #[no_mangle] // don't mangle the name of this function
 pub extern "C" fn _start() -> ! {
@@ -32,6 +29,6 @@ fn panic(info: &PanicInfo) -> ! {
 
 #[cfg(test)]
 #[panic_handler]
-fn panic(info: &PanicInfo) {
-    crate::panic_on_test(info);
+fn panic(info: &PanicInfo) -> ! {
+    rustios::panic_on_test(info)
 }
