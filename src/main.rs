@@ -9,7 +9,7 @@ mod vga_buffer;
 pub extern "C" fn _start() -> ! {
     // this function is the entry point, since the linker looks for a function
     // named `_start` by default
-    println!("Hello World {}", "!");
+    println!("Hello World{}", "!");
 
     loop {}
 }

@@ -14,7 +14,6 @@ lazy_static! {
     });
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Color {
@@ -71,6 +70,7 @@ impl Writer {
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
+
             byte => {
                 if self.column_position >= BUFFER_WIDTH {
                     self.new_line();
@@ -93,17 +93,17 @@ impl Writer {
     /// Wraps lines at `BUFFER_WIDTH`. Supports the `\n` newline character. Does **not**
     /// support strings with non-ASCII characters, since they can't be printed in the VGA text
     /// mode.
-    fn write_string(&mut self, s: &str) {
-        for byte in s.bytes() {
-            match byte {
-                // printable ASCII byte or newline
-                0x20..=0x7e | b'\n' => self.write_byte(byte),
+    // fn write_string(&mut self, s: &str) {
+    //     for byte in s.bytes() {
+    //         match byte {
+    //             // printable ASCII byte or newline
+    //             0x20..=0x7e | b'\n' => self.write_byte(byte),
 
-                // not part of printable ASCII range
-                _ => self.write_byte(0xfe),
-            }
-        }
-    }
+    //             // not part of printable ASCII range
+    //             _ => self.write_byte(0xfe),
+    //         }
+    //     }
+    // }
 
     fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
@@ -132,10 +132,22 @@ impl Writer {
 impl fmt::Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         for byte in s.bytes() {
-            self.write_byte(byte)
+            match byte {
+                // printable ASCII byte or newline
+                0x20..=0x7e | b'\n' => self.write_byte(byte),
+
+                // not part of printable ASCII range
+                _ => self.write_byte(0xfe),
+            }
         }
         Ok(())
     }
+}
+
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    WRITER.lock().write_fmt(args).unwrap();
 }
 
 #[macro_export]
@@ -147,10 +159,4 @@ macro_rules! print {
 macro_rules! println {
     () => ($crate::print!("\n"));
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
-}
-
-#[doc(hidden)]
-pub fn _print(args: fmt::Arguments) {
-    use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
 }
